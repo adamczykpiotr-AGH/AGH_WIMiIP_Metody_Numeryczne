@@ -1,5 +1,5 @@
 # AGH_WIMiIP_Metody_Numeryczne
-Zadania z Metod Numerycznych na AGH WIMiIP [prowadzący: dr hab. inż. Marcin Hojny]
+Laboratoria z Metod Numerycznych na AGH WIMiIP [prowadzący: dr hab. inż. Marcin Hojny]
 
 ## Zaimplementowane metody:
 
