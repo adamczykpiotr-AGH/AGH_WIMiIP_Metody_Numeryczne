@@ -71,7 +71,7 @@ double numeric::zeroOfAFunction::bisection(f, -2., 0., 0.1);
 ```
 * Metoda Newtona-Raphsona
 ```cpp
-double numeric::zeroOfAFunction::bisection(f, fDerivative, -2., 0., 0.1);
+double numeric::zeroOfAFunction::newtonRaphson(f, fDerivative, -2., 0., 0.1);
 ```
 
 ## Całkowanie
