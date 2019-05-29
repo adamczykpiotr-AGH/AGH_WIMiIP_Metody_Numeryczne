@@ -4,7 +4,7 @@
 int numeric::interpolation::newtonCacheLength = 0;
 std::vector<numeric::interpolation::newtonCacheEntry> numeric::interpolation::newtonCache;
 
-double numeric::interpolation::newton(std::vector<double> x, std::vector<double> y, double newPoint) {
+double numeric::interpolation::newton(const std::vector<double> & x, const std::vector<double> & y, double newPoint) {
 	
 	unsigned int size = x.size() - 1;
 
@@ -30,7 +30,7 @@ double numeric::interpolation::newton(std::vector<double> x, std::vector<double>
 
 }
 
-double numeric::interpolation::newtonDifferenceQuotient(unsigned int size, std::vector<double> x, std::vector<double> y, unsigned int pos) {
+double numeric::interpolation::newtonDifferenceQuotient(unsigned int size, const std::vector<double> & x, const std::vector<double> & y, unsigned int pos) {
 
 	if (size == 1) {
 		
@@ -58,7 +58,9 @@ double numeric::interpolation::newtonDifferenceQuotient(unsigned int size, std::
 }
 
 
-double numeric::systemsOfEquasions::matrixDeterminant(std::vector<std::vector<double>> matrix) {
+double numeric::systemsOfEquasions::matrixDeterminant(std::vector<std::vector<double>> * matrixPtr) {
+
+	std::vector<std::vector<double>> matrix = *matrixPtr;
 
 	unsigned int matrixSize = matrix.size();
 
@@ -77,7 +79,9 @@ double numeric::systemsOfEquasions::matrixDeterminant(std::vector<std::vector<do
 
 }
 
-std::vector<double> numeric::systemsOfEquasions::polynomial(std::vector<std::vector<double>> matrix) {
+std::vector<double> numeric::systemsOfEquasions::polynomial(std::vector<std::vector<double>> * matrixPtr) {
+
+	std::vector<std::vector<double>> matrix = *matrixPtr;
 
 	std::vector<std::vector<double>> wx;
 	std::vector<std::vector<double>> wy;
@@ -124,10 +128,10 @@ std::vector<double> numeric::systemsOfEquasions::polynomial(std::vector<std::vec
 		wz.push_back(wzTemp);
 	}
 
-	double detW = matrixDeterminant(matrix);
-	double detWx = matrixDeterminant(wx);
-	double detWy = matrixDeterminant(wy);
-	double detWz = matrixDeterminant(wz);
+	double detW = matrixDeterminant(&matrix);
+	double detWx = matrixDeterminant(&wx);
+	double detWy = matrixDeterminant(&wy);
+	double detWz = matrixDeterminant(&wz);
 
 
 	if (detW == 0) {
@@ -155,7 +159,7 @@ std::vector<double> numeric::systemsOfEquasions::polynomial(std::vector<std::vec
 }
 
 
-double numeric::interpolation::lagrange(std::vector<double> x, std::vector<double> fx, double newPoint) {
+double numeric::interpolation::lagrange(const std::vector<double> & x, const std::vector<double> & y, double newPoint) {
 
 	unsigned int size = x.size();
 
@@ -183,7 +187,7 @@ double numeric::interpolation::lagrange(std::vector<double> x, std::vector<doubl
 
 	for (unsigned int i = 0; i < size; i++) {
 	
-		ret += fx[i] * li[i];
+		ret += y[i] * li[i];
 	
 	}
 
@@ -295,18 +299,46 @@ double numeric::integration::monteCarlo(double(*function)(double), double start,
 
 }
 
-double numeric::integration::polynomialFunction(const std::vector<double>& coefficients, double argument) {
-	
-	unsigned int coeffSize = coefficients.size();
+double numeric::integration::gaussianQuadrature(const std::vector<double>& xi, const std::vector<double>& yi, const std::vector<double>& weight, const std::vector<double>& point) {
 
-	double y = 0.;
-	for (unsigned int i = 0; i < coeffSize; i++) {
+	//2 points only solution
 
-		y += abs(coefficients[i] * pow(argument, coeffSize - i - 1));
-			
+	double XiDerr[2][4];
+	double NiDerr[2][4];
+
+	for (int i = 0; i < 2; i++) {
+		for (int j = 0; j < 2; j++) {
+
+			XiDerr[j][0] = -0.25 * (1.0 - point[j]);
+			XiDerr[j][1] = 0.25 * (1.0 - point[j]);
+			XiDerr[j][2] = 0.25 * (1.0 + point[j]);
+			XiDerr[j][3] = -0.25 * (1.0 + point[j]);
+
+			NiDerr[i][0] = -0.25 * (1.0 - point[i]);
+			NiDerr[i][1] = -0.25 * (1.0 + point[i]);
+			NiDerr[i][2] = 0.25 * (1.0 + point[i]);
+			NiDerr[i][3] = 0.25 * (1.0 - point[i]);
+		}
 	}
 
-	return y;
+	double dxdKSI, dydKSI, dxdNI, dydNI, area = 0.;
+
+	for (int i = 0; i < 2; i++) {
+		for (int j = 0; j < 2; j++) {
+			dxdKSI = XiDerr[j][0] * xi[0] + XiDerr[j][1] * xi[1] +
+				XiDerr[j][2] * xi[2] + XiDerr[j][3] * xi[3];
+			dydKSI = XiDerr[j][0] * yi[0] + XiDerr[j][1] * yi[1] +
+				XiDerr[j][2] * yi[2] + XiDerr[j][3] * yi[3];
+			dxdNI = NiDerr[i][0] * xi[0] + NiDerr[i][1] * xi[1] +
+				NiDerr[i][2] * xi[2] + NiDerr[i][3] * xi[3];
+			dydNI = NiDerr[i][0] * yi[0] + NiDerr[i][1] * yi[1] +
+				NiDerr[i][2] * yi[2] + NiDerr[i][3] * yi[3];
+
+			area += (dxdKSI * dydNI - dxdNI * dydKSI) * weight[i] * weight[j];
+		}
+	}
+
+	return area;
 }
 
 double numeric::zeroOfAFunction::bisection(double (*f)(double), double a, double b, double precision){
@@ -365,7 +397,9 @@ double numeric::zeroOfAFunction::newtonRaphson(double (*f)(double), double (*fDe
 	return xn;
 }
 
-std::vector<double> numeric::systemsOfEquasions::gaussianElimination(std::vector<std::vector<double>> matrix) {
+std::vector<double> numeric::systemsOfEquasions::gaussianElimination(std::vector<std::vector<double>> * matrixPtr) {
+
+	std::vector<std::vector<double>> matrix = *matrixPtr;
 
 	unsigned int matrixSize = matrix.size();
 	unsigned int matrixCols = matrix[0].size();
